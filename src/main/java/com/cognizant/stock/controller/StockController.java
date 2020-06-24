@@ -7,6 +7,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -89,6 +92,7 @@ public class StockController {
         @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })	
 	@GetMapping("/getStock/v1")
+	@Cacheable(value = "stock")
     public List<Stock> getAllStock() {
 		
 		logger.debug("StockController::getAllStock::entry()");
@@ -106,6 +110,7 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@GetMapping("/getStock/v2/{id}")
+	@Cacheable(value = "stock", key = "#stockId")
     public ResponseEntity<Stock> getStockById(@PathVariable(value = "id") Long stockId)
         throws ResourceNotFoundException {
 		
@@ -127,6 +132,7 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@GetMapping("/getstock/v3/{name}")
+	@Cacheable(value = "stock", key = "#stockName")
     public Stock getStockByName(@PathVariable(value = "name") String stockName)
         throws ResourceNotFoundException {
 		
@@ -152,6 +158,7 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@PutMapping("/updateStock/v1/{id}")
+	@CachePut(value = "stock", key = "#stockeId")
     public ResponseEntity<Stock> updateStockWithoutPurchase(@PathVariable(value = "id") Long stockeId,
          @RequestBody Stock stockDetails) throws ResourceNotFoundException {
 		
@@ -179,6 +186,7 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@PutMapping("/updateStock/v2/{id}")
+	@CachePut(value = "stock", key = "#stockeId")
     public ResponseEntity<Stock> updateStockWithPurchase(@PathVariable(value = "id") Long stockeId,
          @RequestBody Stock stockDetails) throws ResourceNotFoundException {
 		
@@ -208,6 +216,7 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@DeleteMapping("/deleteStock/v1/{id}")
+	@CacheEvict(value = "stock", allEntries=true)
     public Map<String, Boolean> deleteStock(@PathVariable(value = "id") Long stockId)
          throws ResourceNotFoundException {
 		
