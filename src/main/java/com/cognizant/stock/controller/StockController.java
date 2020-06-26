@@ -21,8 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.cognizant.stock.exception.ResourceNotFoundException;
-import com.cognizant.stock.domain.Stock;
-import com.cognizant.stock.repository.StockRepository;
+import com.cognizant.stock.domain.StockEntity;
+import com.cognizant.stock.dto.StockRequestDto;
+import com.cognizant.stock.service.StockService;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -34,12 +35,9 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "Stock Management", description = "Operations pertaining to Stock in Inventory Management System")
 public class StockController {
 	Logger logger = LoggerFactory.getLogger(StockController.class);
-	
-	@Autowired
-	private Stock stock;
 
 	@Autowired
-	private StockRepository stockRepository;
+	private StockService stockService;
 	
 	int stockByNameResult;
 	
@@ -51,17 +49,8 @@ public class StockController {
         @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
 	@PostMapping("/addStock/v1")
-    public Stock createStockWithoutPurchase(@RequestBody Stock stockRequest) {
-		
-		logger.debug("StockController::createStockWithoutPurchase::entry()");
-	
-		stock.setStockName(stockRequest.getStockName());
-		stock.setStockType(stockRequest.getStockType());
-		stock.setStockCount(stockRequest.getStockCount());
-		
-		logger.debug("StockController::createStockWithoutPurchase::exit()");
-		
-        return stockRepository.save(stock);
+    public StockEntity createStockWithoutPurchase(@RequestBody StockRequestDto stockRequest) {
+		return stockService.createStock(stockRequest);
         
     }
 	
@@ -73,13 +62,9 @@ public class StockController {
         @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })
 	@PostMapping("/addStock/v2")
-    public Stock createStockWithPurchase(@RequestBody Stock stockRequest) {
-		
-		logger.debug("StockController::createStockWithPurchase::entry()");
-		
-		logger.debug("StockController::createStockWithPurchase::exit()");
-		
-        return stockRepository.save(stockRequest);
+    public StockEntity createStockWithPurchase(@RequestBody StockRequestDto stockRequest) {
+
+        return stockService.save(stockRequest);
         
     }
 	
@@ -92,14 +77,10 @@ public class StockController {
         @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     })	
 	@GetMapping("/getStock/v1")
-	@Cacheable(value = "stock")
-    public List<Stock> getAllStock() {
+	//@Cacheable(value = "stock")
+    public List<StockEntity> getAllStock() {
 		
-		logger.debug("StockController::getAllStock::entry()");
-		
-		logger.debug("StockController::getAllStock::exit()");
-		
-        return stockRepository.findAll();
+        return stockService.findAll();
     }
 	
 	@ApiOperation(value = "Get a stock by Id")
@@ -110,18 +91,14 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@GetMapping("/getStock/v2/{id}")
-	@Cacheable(value = "stock", key = "#stockId")
-    public ResponseEntity<Stock> getStockById(@PathVariable(value = "id") Long stockId)
+	//@Cacheable(value = "stock", key = "#stockId")
+    public ResponseEntity<StockEntity> getStockById(@PathVariable(value = "id") Long stockId)
         throws ResourceNotFoundException {
 		
-		logger.debug("StockController::getStockById::entry()");
+		StockEntity stock =stockService.getStockById(stockId);
+		return ResponseEntity.ok().body(stock);
 		
-		Stock stock = stockRepository.findById(stockId)
-          .orElseThrow(() -> new ResourceNotFoundException("Stock not found for this id :: " + stockId));
 		
-		logger.debug("StockController::getStockById::exit()");
-		
-        return ResponseEntity.ok().body(stock);
     }
 	
 	@ApiOperation(value = "Get a stock by Name")
@@ -132,21 +109,10 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@GetMapping("/getstock/v3/{name}")
-	@Cacheable(value = "stock", key = "#stockName")
-    public Stock getStockByName(@PathVariable(value = "name") String stockName)
+	//@Cacheable(value = "stock", key = "#stockName")
+    public StockEntity getStockByName(@PathVariable(value = "name") String stockName)
         throws ResourceNotFoundException {
-		
-		logger.debug("StockController::getStockByName::entry()");
-		try {
-		 stock = stockRepository.findByName(stockName);
-		}
-		catch(Exception e) {
-			logger.debug("Stock Not found");
-			
-		}
-		
-		logger.debug("StockController::getStockByName::exit()");
-		
+		StockEntity stock =stockService.findByName(stockName);
         return stock;
     }
 	
@@ -158,24 +124,13 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@PutMapping("/updateStock/v1/{id}")
-	@CachePut(value = "stock", key = "#stockeId")
-    public ResponseEntity<Stock> updateStockWithoutPurchase(@PathVariable(value = "id") Long stockeId,
-         @RequestBody Stock stockDetails) throws ResourceNotFoundException {
+	//@CachePut(value = "stock", key = "#stockeId")
+    public ResponseEntity<StockEntity> updateStockWithoutPurchase(@PathVariable(value = "id") Long stockeId,
+         @RequestBody StockRequestDto stockDetails) throws ResourceNotFoundException {
 		
-		logger.debug("StockController::updateStockWithoutPurchase::entry()");
+		final StockEntity updatedPurchase = stockService.updateStockWithoutPurchase(stockeId, stockDetails);
+		return ResponseEntity.ok(updatedPurchase);
 		
-		Stock stock = stockRepository.findById(stockeId)
-        .orElseThrow(() -> new ResourceNotFoundException("Stock not found for this id :: " + stockeId));
-		
-		stock.setStockName(stockDetails.getStockName());
-		stock.setStockType(stockDetails.getStockType());
-		stock.setStockCount(stockDetails.getStockCount());
-		
-		final Stock updatedStock = stockRepository.save(stock);
-		
-		logger.debug("StockController::updateStockWithoutPurchase::exit()");
-		
-        return ResponseEntity.ok(updatedStock);
     }
 	
 	@ApiOperation(value = "Update a Stock With Purchase")
@@ -186,26 +141,12 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@PutMapping("/updateStock/v2/{id}")
-	@CachePut(value = "stock", key = "#stockeId")
-    public ResponseEntity<Stock> updateStockWithPurchase(@PathVariable(value = "id") Long stockeId,
-         @RequestBody Stock stockDetails) throws ResourceNotFoundException {
+	//@CachePut(value = "stock", key = "#stockeId")
+    public ResponseEntity<StockEntity> updateStockWithPurchase(@PathVariable(value = "id") Long stockeId,
+         @RequestBody StockRequestDto stockDetails) throws ResourceNotFoundException {
 		
-		logger.debug("StockController::updateStockWithPurchase::entry()");
-		
-		System.out.print("id:::"+stockeId);
-		
-		Stock stock = stockRepository.findById(stockeId)
-        .orElseThrow(() -> new ResourceNotFoundException("Stock not found for this id :: " + stockeId));
-		
-		stock.setStockName(stockDetails.getStockName());
-		stock.setStockType(stockDetails.getStockType());
-		stock.setStockCount(stockDetails.getStockCount());
-		
-		final Stock updatedStock = stockRepository.save(stock);
-		
-		logger.debug("StockController::updateStockWithPurchase::exit()");
-		
-        return ResponseEntity.ok(updatedStock);
+		final StockEntity updatedPurchase = stockService.updateStockWithPurchase(stockeId, stockDetails);
+		return ResponseEntity.ok(updatedPurchase);
     }
 	
 	@ApiOperation(value = "Delete a stock")
@@ -216,22 +157,14 @@ public class StockController {
 	        @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
 	    })
 	@DeleteMapping("/deleteStock/v1/{id}")
-	@CacheEvict(value = "stock", allEntries=true)
+	//@CacheEvict(value = "stock", allEntries=true)
     public Map<String, Boolean> deleteStock(@PathVariable(value = "id") Long stockId)
          throws ResourceNotFoundException {
 		
-		logger.debug("StockController::deleteStock::entry()::id");
-		
-		Stock stock = stockRepository.findById(stockId)
-       .orElseThrow(() -> new ResourceNotFoundException("Stock not found for this id :: " + stockId));
-
-		stockRepository.delete(stock);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("deleted", Boolean.TRUE);
-        
-        logger.debug("StockController::deleteStock::exit()");
-        
-        return response;
+		stockService.deleteStock(stockId);
+		Map<String, Boolean> response = new HashMap<>();
+		response.put("deleted", Boolean.TRUE);
+		return response;
     }
 	
 
