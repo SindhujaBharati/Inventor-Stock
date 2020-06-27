@@ -77,9 +77,9 @@ public class StockServiceImpl implements StockService{
 		logger.debug("StockServiceImpl::updateStockWithoutPurchase::entry()");
 		StockEntity stock = stockRepository.findById(stockeId)
 				.orElseThrow(() -> new ResourceNotFoundException("Purchase not found for this id :: " + stockeId));
-		stock.setStockName(stock.getStockName());
-		stock.setStockType(stock.getStockType());
-		stock.setStockCount(stock.getStockCount());
+		stock.setStockName(stockDetails.getStockName());
+		stock.setStockType(stockDetails.getStockType());
+		stock.setStockCount(stockDetails.getStockCount());
 		logger.debug("StockServiceImpl::updateStockWithoutPurchase::exit()");
 		return stockRepository.save(stock);
 	}
@@ -89,9 +89,9 @@ public class StockServiceImpl implements StockService{
 		logger.debug("StockServiceImpl::updateStockWithPurchase::entry()");
 		StockEntity stock = stockRepository.findById(stockeId)
 				.orElseThrow(() -> new ResourceNotFoundException("Purchase not found for this id :: " + stockeId));
-		stock.setStockName(stock.getStockName());
-		stock.setStockType(stock.getStockType());
-		stock.setStockCount(stock.getStockCount());
+		stock.setStockName(stockDetails.getStockName());
+		stock.setStockType(stockDetails.getStockType());
+		stock.setStockCount(stockDetails.getStockCount());
 		logger.debug("StockServiceImpl::updateStockWithPurchase::exit()");
 		return stockRepository.save(stock);
 	}
